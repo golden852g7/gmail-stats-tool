@@ -15,22 +15,35 @@
 
 4. 点击「创建导出」，等待 Google 打包。
 
-5. 导出完成后，你会收到 Google 邮件通知。下载压缩包后解压，找到：  
+5. **确保仅导出已发送邮件（Sent Mail）**：  
+   在导出设置中点击「包含的邮件标签」(*All mail data included*)，  
+   取消全选后，仅勾选 **Sent Mail（已发送邮件）**。  
+   这样导出的 `.mbox` 文件只包含你自己发出的邮件。
+
+   导出完成后，下载压缩包并解压，通常可在以下路径找到：  
    ```
-   Takeout/Mail/All mail Including Spam and Trash.mbox
-   ```  
-   或者：  
+   Takeout/Mail/Sent Mail.mbox
    ```
-   Takeout/Mail/Inbox.mbox
-   ```  
+
    📍 即为可用于本工具的 `.mbox` 邮件文件。
 
-6. 将该 `.mbox` 文件放入你的项目根目录（例如与 `gmail_stats_final.py` 同一文件夹）。
+6. 将 `.mbox` 文件放入你的项目根目录（例如与 `gmail_stats_final.py` 同一文件夹）。
 
 7. 在命令行中运行统计命令，例如：  
    ```bash
-   python gmail_stats_final.py Inbox.mbox --aggregate-all --format csv > result.csv
+   python gmail_stats_final.py "Sent Mail.mbox" --aggregate-all --format csv > result.csv
    ```
+
+8. 如需指定统计日期范围，可加入以下参数：  
+   ```bash
+   python gmail_stats_final.py "Sent Mail.mbox"        --aggregate-all        --start-date 2025-01-01        --end-date 2025-10-31        --format csv > result.csv
+   ```
+
+   📘 参数说明：  
+   - `--start-date`：统计起始日期（含当天）；  
+   - `--end-date`：统计截止日期（含当天）；  
+   - 日期格式：`YYYY-MM-DD`；  
+   - 若不指定，则默认统计 `.mbox` 文件中的所有邮件。
 
 ---
 
