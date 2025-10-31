@@ -174,5 +174,5 @@ python gmail_stats.py --create-sample-mbox demo.mbox
 
 ---
 
-作者：ChatGPT（基于 GPT-5）  
+作者：YM 
 最后更新：2025-10-31
