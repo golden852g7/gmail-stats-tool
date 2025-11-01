@@ -49,7 +49,7 @@ python gmail_stats_final_v9.py <mbox文件路径> [选项]
 | `--format` | 输出格式，可选 `csv`、`json`、`text` | `--format csv` |
 | `--output` | 输出文件名 | `--output result_v9.csv` |
 
-### 3. 示例
+### 3. 示例（主要操作就是这个命令。若mbox文件里已筛选出某时间段你发送出去的邮件的话，"--sender paghegest@gmail.com"可加可不加）
 ```bash
 python gmail_stats_final_v9.py Sent_2025_Q3.mbox --sender paghegest@gmail.com --format csv --output result_v9.csv
 ```
