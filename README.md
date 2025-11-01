@@ -26,6 +26,15 @@
 
 ## 🖥️ 使用方法
 
+### 0. 前提
+
+**确保Python版本3.9+（下载最新版本即可：https://www.python.org/downloads/），安装时能打勾的都勾上。**
+**安装结束按Win键输入"cmd"回车进入"命令提示符"窗口，输入**
+```bash
+python -V
+```
+**确认Python是否安装成功及其版本，确认正确后进入你下载的"gmail—stats-tool"文件夹，页面正上方有一小条显示文件夹路径的区域，点击，输入"cmd"，进入该文件夹路径下的"命令提示符"窗口进行后续操作**
+
 ### 1. 命令行基本用法
 ```bash
 python gmail_stats_final_v9.py <mbox文件路径> [选项]
