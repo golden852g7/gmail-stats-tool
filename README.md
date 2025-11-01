@@ -28,8 +28,8 @@
 
 ### 0. 前提
 
-**确保Python版本3.9+（下载最新版本即可：https://www.python.org/downloads/），安装时能打勾的都勾上。**
-**安装结束按Win键输入"cmd"回车进入"命令提示符"窗口，输入**
+**确保Python版本3.9+，下载最新版本即可：https://www.python.org/downloads/**
+**安装时能打勾的都勾上，安装结束按Win键输入"cmd"回车进入"命令提示符"窗口，输入**
 ```bash
 python -V
 ```
