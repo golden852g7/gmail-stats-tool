@@ -1,144 +1,98 @@
 # 📘 README – Gmail MBOX Stats Tool (v9)
 
-## 🧩 项目简介
-`gmail_stats_final_v9.py` 是一个用于分析 **Gmail 导出的 .mbox 文件** 的统计工具。  
-它可以自动提取：
-- 每家公司发送或接收的邮件总数；
-- 每封邮件中涉及的员工姓名；
-- 员工对应的操作类型（如 ASSUNZIONE、PROROGA、DIMISSIONE 等）。
+## 🧩 工具简介
+`gmail_stats_final_v9.py` 用于分析 **Gmail 导出的 `.mbox`** 文件，提取出：
+- 公司名（出现在主题中 `DITTA` 之后，保留 `&`、`'`、`-` 等符号，遇到 `DAL` 等终止词停止）  
+- 邮件发送日期（以**邮件的 `Date` 头**为准，缺失时回退到 mbox 的 `From ` 信封行）  
+- 每封邮件中 **员工的“状态 + 姓名”**（仅统计一次/人/封，避免重复）
 
-最终输出一个结构化表格（CSV/JSON），方便统计或导入数据库。
-
----
-
-## ⚙️ 功能特性（v9 版本更新）
-
-**v9 是基于 v8 的稳定增强版，主要修复与改进如下：**
-
-| 修复项 | 描述 |
-|--------|------|
-| ✅ 公司名支持特殊符号 | 改进正则 `UPPER_TOKEN_RE`，允许 `&`、`'`、`-` 等符号（如 “LU & YAN” 不再被截断）。 |
-| ✅ 员工名日期截断 | 检测类似 `01/01/1995` 的日期样式时自动停止提取，避免将日期错误包含在姓名中。 |
-| ✅ 完全兼容旧逻辑 | 保持与 v8 一致的提取流程、输出格式及排序逻辑，保证无兼容性问题。 |
-| ✅ 稳定性增强 | 修复部分编码异常、空行、MIME 多层嵌套问题。 |
+> 输出 CSV 改为三列：**A 列 `company`、B 列 `date`、C 列 `operation_name`**，并按日期排序（同一日期会聚在一起）。
 
 ---
 
-## 🖥️ 使用方法
+## ✅ 关键特性（本版要点）
+- **公司名**：从 `Subject` 中的 `DITTA` 后提取；允许字符集：`A–Z 0–9 & ' - /` 与空格；遇到 `DAL` 等**立刻停止**。
+- **员工名**：从 `dipendente` 后开始提取，支持跨行；允许全大写或 Title Case；**一旦检测到日期样式或斜杠 `/` 立即截断**。
+- **状态识别**：  
+  `ASSUNZIONE / PROROGA / VARIAZIONE / DIMISSIONE / DIMISSIONE CLIC LAVORO / LICENZIAMENTO`
+- **去重**：同一封邮件，同一员工同一状态**只记 1 次**。
+- **日期解析**：  
+  1) 优先使用头部 `Date:`；  
+  2) 若缺失，回退到 mbox 的 `From <envelope>` 行；  
+  3) 仍缺失则留空。输出格式为 `dd/mm/yyyy`。
+- **排序**：最终按 `date` 升序输出。
 
-### 0. 前提
+---
 
-**确保Python版本3.9+，下载最新版本即可：https://www.python.org/downloads/**
-**安装时能打勾的都勾上，安装结束按Win键输入"cmd"回车进入"命令提示符"窗口，输入**
+## 🖥️ 命令用法
 ```bash
-python -V
-```
-**确认Python是否安装成功及其版本，确认正确后进入你下载的"gmail-stats-tool"文件夹，页面正上方有一小条显示文件夹路径的区域，点击，输入"cmd"，进入该文件夹路径下的"命令提示符"窗口进行后续操作**
-
-### 1. 命令行基本用法
-```bash
-python gmail_stats_final_v9.py <mbox文件路径> [选项]
-```
-
-### 2. 可用参数
-
-| 参数 | 说明 | 示例 |
-|------|------|------|
-| `<mbox_path>` | 要分析的 `.mbox` 文件路径 | `Sent_2025_Q3.mbox` |
-| `--sender` | 仅统计指定发件人发送的邮件 | `--sender paghegest@gmail.com` |
-| `--format` | 输出格式，可选 `csv`、`json`、`text` | `--format csv` |
-| `--output` | 输出文件名 | `--output result_v9.csv` |
-
-### 3. 示例（主要操作就是这个命令）
-```bash
+python gmail_stats_final_v9.py <mbox_file> --format csv --output result_v9.csv
+# 例如仅统计你的发件：
 python gmail_stats_final_v9.py Sent_2025_Q3.mbox --sender paghegest@gmail.com --format csv --output result_v9.csv
 ```
-（若mbox文件里已筛选出某时间段你自己邮箱发送出去的邮件的话，下面这个命令可加可不加）
-```bash
---sender 你的Gmail邮箱
-```
-执行后会在当前目录生成：
-```
-result_v9.csv
-```
+
+### 参数说明
+| 参数 | 含义 | 示例 |
+|---|---|---|
+| `<mbox_file>` | 待分析的 mbox 文件路径 | `Sent_2025_Q3.mbox` |
+| `--sender` | 只统计该发件人发送的邮件 | `--sender paghegest@gmail.com` |
+| `--format` | 输出格式（`csv`/`json`/`text`） | `--format csv` |
+| `--output` | 输出文件名 | `--output result_v9.csv` |
 
 ---
 
-## 📊 输出格式说明
+## 📊 输出格式（CSV）
+**列：**  
+- `company` — 主题 `DITTA` 后的公司名  
+- `date` — 邮件发送日期（`Date` 头或 mbox 信封行），格式 `dd/mm/yyyy`  
+- `operation_name` — “状态 + 员工姓名”
 
-| 列名 | 含义 |
-|------|------|
-| `company` | 提取到的公司名（如 `BEAUTY NAILS DI LIN YING 20412`） |
-| `employee` | 提取到的员工姓名（如 `ZHU MIMIAO`） |
-| `operation` | 员工对应的操作类型（如 `ASSUNZIONE`、`PROROGA` 等） |
-| `count` | 统计次数（目前每行对应一条记录） |
-
-示例输出：
+**示例：**
 ```csv
-company,employee,operation,count
-BEAUTY NAILS DI LIN YING 20412,,TOTAL_MESSAGES,1
-BEAUTY NAILS DI LIN YING 20412,ZHU MIMIAO,DIMISSIONE CLIC LAVORO,1
-HM TREVISO 20093,ARAUJO NARDOTO REBECA CRISTINA,PROROGA,1
-STAR BEAUTY DI LIN 20566,FAROOQ UMAR,VARIAZIONE,1
+company,date,operation_name
+HM TREVISO 20093,06/01/2025,PROROGA ARAUJO NARDOTO REBECA CRISTINA
+HM TREVISO 20093,20/03/2025,DIMISSIONE CLIC LAVORO ARAUJO NARDOTO REBECA CRISTINA
+LU & YAN 20513,01/04/2025,ASSUNZIONE FAROOQ UMAR
+U SUSHI 8 S.A.S DI WANG WENTAO 20315,31/05/2025,LICENZIAMENTO LIN YUHAN
+BEAUTY NAILS DI LIN YING 20412,30/06/2025,PROROGA ZHU MIMIAO
 ```
 
 ---
 
-## 🔍 正则与提取逻辑说明
+## 🔎 提取规则
 
-### 公司名提取
-- 关键字：`DITTA`
-- 结束条件：遇到 `->`、`(`、`[`、`dipendente`、`DAL` 等词即停止。
-- 合法字符：`A–Z 0–9 & ' - /`
-- 示例：
-  ```
-  Subject: 1 ASSUNZIONE DITTA LU & YAN 20513 DAL 01/04
-  → 提取公司名：LU & YAN 20513
-  ```
+### 公司名（Company）
+- 来源：`Subject`，从 `DITTA` 后开始
+- 允许字符：`[A-Z0-9&' /-]`
+- 终止词：`DAL`、`->`、`(`、`[`、`dipendente`
+- 示例：`... DITTA LU & YAN 20513 DAL 01/04/2025` → `LU & YAN 20513`
 
-### 员工名提取
-- 关键字：`dipendente`
-- 向后最多读取 600 个字符；
-- 连续大写单词或 Title Case 形式视为姓名；
-- 遇到 `/` 或日期模式立即停止；
-- 示例：
-  ```
-  dipendente FAROOQ UMAR 01/01/1995
-  → 提取员工名：FAROOQ UMAR
-  ```
+### 员工 + 状态（Operation + Employee）
+- 来源：`Subject` 与正文
+- 员工从 `dipendente` 开始，遇日期样式或 `/` 截断
+- 同一封邮件：**每位员工每种状态只统计一次**
 
-### 操作状态识别
-支持并自动归一化以下类型（大小写均可）：
-- **DIMISSIONE CLIC LAVORO**
-- **DIMISSIONE**
-- **PROROGA**
-- **VARIAZIONE**
-- **ASSUNZIONE**
-- **LICENZIAMENTO**
+### 发送日期（Date）
+- 优先：`Date:` 头（系统发送时间）
+- 回退：`From ... Mon Mar 24 09:53:02 +0000 2025`
+- 统一格式：`dd/mm/yyyy`
 
 ---
 
-## 🧠 调试建议
-- 若运行时遇到 `UnicodeDecodeError`，可检查 `.mbox` 是否 UTF-8 格式。
-- 若结果为空：
-  - 确认主题中存在 “DITTA”；  
-  - 检查发件人筛选条件是否过严（可先不加 `--sender` 测试）。
-- 若输出未包含员工名，建议：
-  - 搜索 `dipendente` 关键字是否换行；
-  - 确认日期格式没有误被识别为姓名一部分（v9 已修复此问题）。
+## 🧪 常见排错
+- **结果为空白**：确认 mbox 含发件人及 `DITTA`。  
+- **公司名被截断**：遇 `DAL`/括号等属正常终止。  
+- **日期空白**：无 `Date` 头且信封行缺失时可能为空。  
 
 ---
 
-## 📦 输出文件
-默认输出：
-```
-result_v9.csv
-```
-或根据 `--output` 参数自定义文件名。
+## 🗂️ 版本更新摘要
+- 新增：发送日期以系统时间为准（非正文）  
+- 新增：公司名保留 `&`、`'` 等符号  
+- 新增：员工名遇日期样式立即截断  
+- 优化：CSV 输出改为三列并按日期升序排序
 
 ---
 
-## 🪪 作者与版权
-**作者：** 殷明    
-**邮箱：** 1500692431ym@gmail.com  
-**许可证：** MIT License（自由使用与修改）
+## 🪪 版权
+作者：殷明（1500692431ym@gmail.com）  
